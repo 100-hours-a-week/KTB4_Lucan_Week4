@@ -7,5 +7,5 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class CommentUpdateResponse {
 
-    private Integer commentId;
+    private Long commentId;
 }

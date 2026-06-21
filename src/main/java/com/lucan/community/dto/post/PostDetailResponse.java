@@ -7,7 +7,7 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class PostDetailResponse {
 
-    private Integer postId;
+    private Long postId;
     private String title;
     private String nickname;
     private String imageFile;

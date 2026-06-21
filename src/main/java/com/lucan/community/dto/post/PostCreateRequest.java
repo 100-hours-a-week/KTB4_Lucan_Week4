@@ -17,4 +17,6 @@ public class PostCreateRequest {
     private String content;
 
     private String imageFile;
+
+    private Long userId;
 }

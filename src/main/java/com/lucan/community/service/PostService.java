@@ -1,82 +1,190 @@
 package com.lucan.community.service;
 
+import com.lucan.community.dto.like.LikeRequest;
 import com.lucan.community.dto.like.LikeResponse;
 import com.lucan.community.dto.post.*;
-import com.lucan.community.dto.response.ApiResponse;
+import com.lucan.community.entity.*;
+import com.lucan.community.exception.ConflictException;
+import com.lucan.community.exception.NotFoundException;
+import com.lucan.community.message.MessageCode;
+import com.lucan.community.repository.*;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class PostService {
 
-    public ApiResponse getPosts() {
-        List<PostListResponse> posts = List.of(new PostListResponse
-                (
-                        1,
-                        "test_title",
-                        10,
-                        2,
-                        90,
-                        "lucan"
-                )
+    private final PostRepository postRepository;
+    private final UserRepository userRepository;
+    private final CommentRepository commentRepository;
+    private final PostLikeRepository postLikeRepository;
+    private final PostImageRepository postImageRepository;
+
+    public List<PostListResponse> getPosts() {
+        List<Post> posts = postRepository.findAll();
+        List<PostListResponse> responses = new ArrayList<>();
+
+        for (Post post : posts) {
+            Integer likeCount = postLikeRepository.countByPost(post);
+            Integer commentCount = commentRepository.countByPost(post);
+
+            PostListResponse response = new PostListResponse(
+                    post.getPostId(),
+                    post.getTitle(),
+                    likeCount,
+                    commentCount,
+                    post.getViewCount(),
+                    post.getUser().getNickname()
+            );
+
+            responses.add(response);
+        }
+
+        return responses;
+    }
+
+    @Transactional
+    public PostDetailResponse getPost(Long postId) {
+        Post post = findPost(postId);
+
+        post.increaseViewCount();
+
+        List<PostImage> images = postImageRepository.findByPost(post);
+        String image = null;
+
+        if (!images.isEmpty()) {
+            image = images.get(0).getImage();
+        }
+
+        Comment commentEntity =
+                commentRepository.findFirstByPost(post).orElse(null);
+
+        String comment = null;
+
+        if (commentEntity != null) {
+            comment = commentEntity.getContent();
+        }
+
+        Integer likeCount = postLikeRepository.countByPost(post);
+        Integer commentCount = commentRepository.countByPost(post);
+
+        return new PostDetailResponse(
+                post.getPostId(),
+                post.getTitle(),
+                post.getUser().getNickname(),
+                image,
+                post.getContent(),
+                likeCount,
+                post.getViewCount(),
+                commentCount,
+                comment
         );
-        return new ApiResponse("get_posts_success", posts);
     }
 
-    public ApiResponse getPost(Integer postId) {
-        if (postId != 1) {
-            throw new IllegalArgumentException("post_not_found");
+    @Transactional
+    public PostCreateResponse createPost(PostCreateRequest request) {
+        User user = userRepository.findById(request.getUserId()).orElse(null);
+
+        if (user == null) {
+            throw new NotFoundException(MessageCode.LOGIN_REQUIRED.getMessage());
         }
-        PostDetailResponse post = new PostDetailResponse(
-                1,
-                "test_title",
-                "lucan",
-                "image.png",
-                "test_content",
-                10,
-                90,
-                2,
-                "test_comment"
+
+        Post post = new Post(
+                request.getTitle(),
+                request.getContent(),
+                user
         );
-        return new ApiResponse("get_post_success", post);
-    }
 
-    public ApiResponse createPost(PostCreateRequest request) {
+        Post savedPost = postRepository.save(post);
 
-        PostCreateResponse response = new PostCreateResponse(1);
+        if (request.getImageFile() != null) {
+            PostImage postImage = new PostImage(
+                    request.getImageFile(),
+                    savedPost
+            );
 
-        return new ApiResponse("create_post_success", response);
-    }
-
-    public ApiResponse updatePost(Integer postId, PostUpdateRequest request) {
-        if (postId != 1) {
-            throw new IllegalArgumentException("post_not_found");
+            postImageRepository.save(postImage);
         }
 
-        PostUpdateResponse response = new PostUpdateResponse(postId);
-
-        return new ApiResponse("post_update_success", response);
+        return new PostCreateResponse(savedPost.getPostId());
     }
 
-    public ApiResponse deletePost(Integer postId) {
-        if (postId != 1) {
-            throw new IllegalArgumentException("post_not_found");
+    @Transactional
+    public PostUpdateResponse updatePost(Long postId, PostUpdateRequest request) {
+        Post post = findPost(postId);
+
+        post.setTitle(request.getTitle());
+        post.setContent(request.getContent());
+
+        return new PostUpdateResponse(post.getPostId());
+    }
+
+    @Transactional
+    public void deletePost(Long postId) {
+        Post post = findPost(postId);
+        postRepository.delete(post);
+    }
+
+    @Transactional
+    public LikeResponse createLike(Long postId, LikeRequest request) {
+        Post post = findPost(postId);
+
+        User user = userRepository.findById(request.getUserId()).orElse(null);
+
+        if (user == null) {
+            throw new NotFoundException(MessageCode.LOGIN_REQUIRED.getMessage());
         }
 
-        return new ApiResponse("post_delete_success", null);
+        if (postLikeRepository.existsByUserAndPost(user, post)) {
+            throw new ConflictException(MessageCode.INVALID_REQUEST.getMessage());
+        }
+
+        PostLike postLike = new PostLike(user, post);
+        postLikeRepository.save(postLike);
+
+        Integer likeCount = postLikeRepository.countByPost(post);
+
+        return new LikeResponse(likeCount);
     }
 
-    public ApiResponse createLike(Integer postId) {
+    @Transactional
+    public LikeResponse deleteLike(Long postId, LikeRequest request) {
+        Post post = findPost(postId);
 
-        LikeResponse response = new LikeResponse(10);
+        User user = userRepository.findById(request.getUserId()).orElse(null);
 
-        return new ApiResponse("like_success", response);
+        if (user == null) {
+            throw new NotFoundException(MessageCode.LOGIN_REQUIRED.getMessage());
+        }
+
+        PostLike postLike = postLikeRepository
+                .findByUserAndPost(user, post)
+                .orElse(null);
+
+        if (postLike == null) {
+            throw new NotFoundException(MessageCode.INVALID_REQUEST.getMessage());
+        }
+
+        postLikeRepository.delete(postLike);
+
+        Integer likeCount = postLikeRepository.countByPost(post);
+
+        return new LikeResponse(likeCount);
     }
 
-    public ApiResponse deleteLike(Integer postId) {
+    private Post findPost(Long postId) {
+        Post post = postRepository.findById(postId).orElse(null);
 
-        LikeResponse response = new LikeResponse(9);
+        if (post == null) {
+            throw new NotFoundException(MessageCode.POST_NOT_FOUND.getMessage());
+        }
 
-        return new ApiResponse("unlike_success", response);
+        return post;
     }
 }

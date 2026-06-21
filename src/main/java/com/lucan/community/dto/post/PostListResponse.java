@@ -7,7 +7,7 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class PostListResponse {
 
-    private Integer postId;
+    private Long postId;
     private String title;
     private Integer likeCount;
     private Integer commentCount;

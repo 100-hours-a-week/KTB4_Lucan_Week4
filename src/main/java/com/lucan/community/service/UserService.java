@@ -1,78 +1,100 @@
 package com.lucan.community.service;
 
-import com.lucan.community.dto.response.ApiResponse;
 import com.lucan.community.dto.user.*;
+import com.lucan.community.entity.User;
+import com.lucan.community.exception.ConflictException;
+import com.lucan.community.exception.UnauthorizedException;
+import com.lucan.community.message.MessageCode;
+import com.lucan.community.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.DeleteMapping;
 
 @Service
+@RequiredArgsConstructor
 public class UserService {
 
-    public ApiResponse signup(SignupRequest request) {
+    private final UserRepository userRepository;
 
-        if (!request.getPassword().equals(request.getPasswordConfirm())) {
-            throw new IllegalArgumentException("password_not_match");
+    @Transactional
+    public SignupResponse signup(SignupRequest request) {
+        validatePasswordMatch(request.getPassword(), request.getPasswordConfirm());
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new ConflictException(MessageCode.EMAIL_ALREADY_EXISTS.getMessage());
+        }
+        if (userRepository.existsByNickname(request.getNickname())) {
+            throw new ConflictException(MessageCode.NICKNAME_ALREADY_EXISTS.getMessage());
         }
 
-        if ("test@test.com".equals(request.getEmail())) {
-            throw new IllegalArgumentException("email_already_exists");
-        }
-
-        if ("lucan".equals(request.getNickname())) {
-            throw new IllegalArgumentException("nickname_already_exists");
-        }
-
-        SignupResponse response = new SignupResponse(1);
-
-        return new ApiResponse(
-                "register_success",
-                response
+        User user = new User(
+                request.getEmail(),
+                request.getPassword(),
+                request.getNickname(),
+                request.getProfileImage()
         );
+
+        User savedUser = userRepository.save(user);
+
+        return new SignupResponse(savedUser.getUserId());
     }
 
-    public ApiResponse login(LoginRequest request) {
+    public LoginResponse login(LoginRequest request) {
 
-        if (!"test@test.com".equals(request.getEmail()) || !"12345678".equals(request.getPassword())) {
-            throw new IllegalArgumentException("login_failed");
+        User savedUser = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new UnauthorizedException(MessageCode.LOGIN_FAILED.getMessage()));
+
+        if (!savedUser.getPassword().equals(request.getPassword())) {
+            throw new UnauthorizedException(MessageCode.LOGIN_FAILED.getMessage());
         }
 
-        LoginResponse response = new LoginResponse(1);
-
-        return new ApiResponse("login_success", response);
+        return new LoginResponse(savedUser.getUserId());
     }
 
-    public ApiResponse updateUser(Integer userId, UserUpdateRequest request) {
+    @Transactional
+    public void updateUser(Long userId, UserUpdateRequest request) {
 
-        if ("lucan".equals(request.getNickname())) {
-            throw new IllegalArgumentException("nickname_already_exists");
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UnauthorizedException(MessageCode.LOGIN_REQUIRED.getMessage()));
+
+        if (userRepository.existsByNickname(request.getNickname())) {
+            throw new ConflictException(MessageCode.NICKNAME_ALREADY_EXISTS.getMessage());
         }
 
-        return new ApiResponse("user_update_success", null);
+        user.setNickname(request.getNickname());
+        user.setProfileImage(request.getProfileImage());
     }
 
-    public ApiResponse updatePassword(Integer userId, PasswordUpdateRequest request) {
+    @Transactional
+    public void updatePassword(Long userId, PasswordUpdateRequest request) {
 
-        if (!request.getPassword().equals(request.getPasswordConfirm())) {
-            throw new IllegalArgumentException("password_not_match");
-        }
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UnauthorizedException(MessageCode.LOGIN_REQUIRED.getMessage()));
 
-        return new ApiResponse("password_update_success", null);
+        validatePasswordMatch(request.getPassword(), request.getPasswordConfirm());
+
+        user.setPassword(request.getPassword());
     }
 
-    public ApiResponse deleteUser(Integer userId) {
+    @Transactional
+    public void deleteUser(Long userId) {
 
-        if (userId != 1) {
-            throw new IllegalArgumentException("login_required");
-        }
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UnauthorizedException(MessageCode.LOGIN_REQUIRED.getMessage()));
 
-        return new ApiResponse("user_delete_success", null);
+        userRepository.delete(user);
     }
 
-    public ApiResponse logout(Integer userId) {
+    public void logout(Long userId) {
 
-        if (userId != 1) {
-            throw new IllegalArgumentException("login_required");
+        if (!userRepository.existsById(userId)) {
+            throw new UnauthorizedException(MessageCode.LOGIN_REQUIRED.getMessage());
         }
+    }
 
-        return new ApiResponse("logout_success", null);
+    private void validatePasswordMatch(String password, String passwordConfirm) {
+        if (!password.equals(passwordConfirm)) {
+            throw new IllegalArgumentException(MessageCode.PASSWORD_NOT_MATCH.getMessage());
+        }
     }
 }

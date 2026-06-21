@@ -4,37 +4,93 @@ import com.lucan.community.dto.comment.CommentCreateRequest;
 import com.lucan.community.dto.comment.CommentCreateResponse;
 import com.lucan.community.dto.comment.CommentUpdateRequest;
 import com.lucan.community.dto.comment.CommentUpdateResponse;
-import com.lucan.community.dto.response.ApiResponse;
+import com.lucan.community.entity.Comment;
+import com.lucan.community.entity.Post;
+import com.lucan.community.entity.User;
+import com.lucan.community.exception.NotFoundException;
+import com.lucan.community.message.MessageCode;
+import com.lucan.community.repository.CommentRepository;
+import com.lucan.community.repository.PostRepository;
+import com.lucan.community.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class CommentService {
 
-    public ApiResponse createComment(Integer postId, CommentCreateRequest request) {
-        if (postId != 1) {
-            throw new IllegalArgumentException("post_not_found");
+    private final CommentRepository commentRepository;
+    private final PostRepository postRepository;
+    private final UserRepository userRepository;
+
+    @Transactional
+    public CommentCreateResponse createComment(Long postId, CommentCreateRequest request) {
+        Post post = postRepository.findById(postId).orElse(null);
+
+        if (post == null) {
+            throw new NotFoundException(MessageCode.POST_NOT_FOUND.getMessage());
         }
 
-        CommentCreateResponse response = new CommentCreateResponse(1);
+        User user = userRepository.findById(request.getUserId()).orElse(null);
 
-        return new ApiResponse("create_comment_success", response);
+        if (user == null) {
+            throw new NotFoundException(MessageCode.LOGIN_REQUIRED.getMessage());
+        }
+
+        Comment comment = new Comment(
+                request.getContent(),
+                user,
+                post
+        );
+
+        Comment savedComment = commentRepository.save(comment);
+
+        return new CommentCreateResponse(savedComment.getCommentId());
     }
 
-    public ApiResponse updateComment(Integer postId, Integer commentId, CommentUpdateRequest request) {
-        if (commentId != 1) {
-            throw new IllegalArgumentException("comment_not_found");
+    @Transactional
+    public CommentUpdateResponse updateComment(Long postId, Long commentId, CommentUpdateRequest request) {
+        Post post = postRepository.findById(postId).orElse(null);
+
+        if (post == null) {
+            throw new NotFoundException(MessageCode.POST_NOT_FOUND.getMessage());
         }
 
-        CommentUpdateResponse response = new CommentUpdateResponse(commentId);
+        Comment comment = commentRepository.findById(commentId).orElse(null);
 
-        return new ApiResponse("comment_update_success", response);
+        if (comment == null) {
+            throw new NotFoundException(MessageCode.COMMENT_NOT_FOUND.getMessage());
+        }
+
+        if (!comment.getPost().getPostId().equals(postId)) {
+            throw new NotFoundException(MessageCode.COMMENT_NOT_FOUND.getMessage());
+        }
+
+        comment.setContent(request.getContent());
+
+        return new CommentUpdateResponse(comment.getCommentId());
     }
 
-    public ApiResponse deleteComment(Integer postId, Integer commentId) {
-        if (commentId != 1) {
-            throw new IllegalArgumentException("comment_not_found");
+    @Transactional
+    public void deleteComment(Long postId, Long commentId) {
+        Post post = postRepository.findById(postId).orElse(null);
+
+        if (post == null) {
+            throw new NotFoundException(MessageCode.POST_NOT_FOUND.getMessage());
         }
 
-        return new ApiResponse("comment_delete_success", null);
+        Comment comment = commentRepository.findById(commentId).orElse(null);
+
+        if (comment == null) {
+            throw new NotFoundException(MessageCode.COMMENT_NOT_FOUND.getMessage());
+        }
+
+        if (!comment.getPost().getPostId().equals(postId)) {
+            throw new NotFoundException(MessageCode.COMMENT_NOT_FOUND.getMessage());
+        }
+
+        commentRepository.delete(comment);
     }
 }
