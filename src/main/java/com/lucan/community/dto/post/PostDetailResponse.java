@@ -15,5 +15,4 @@ public class PostDetailResponse {
     private Integer likeCount;
     private Integer viewCount;
     private Integer commentCount;
-    private String comment;
 }

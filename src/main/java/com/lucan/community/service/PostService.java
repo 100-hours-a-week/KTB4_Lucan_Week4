@@ -6,13 +6,15 @@ import com.lucan.community.dto.post.*;
 import com.lucan.community.entity.*;
 import com.lucan.community.exception.ConflictException;
 import com.lucan.community.exception.NotFoundException;
+import com.lucan.community.exception.UnauthorizedException;
 import com.lucan.community.message.MessageCode;
 import com.lucan.community.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -26,27 +28,12 @@ public class PostService {
     private final PostLikeRepository postLikeRepository;
     private final PostImageRepository postImageRepository;
 
-    public List<PostListResponse> getPosts() {
-        List<Post> posts = postRepository.findAll();
-        List<PostListResponse> responses = new ArrayList<>();
+    @Transactional(readOnly = true)
+    public List<PostListResponse> getPosts(int page, int size) {
 
-        for (Post post : posts) {
-            Integer likeCount = postLikeRepository.countByPost(post);
-            Integer commentCount = commentRepository.countByPost(post);
+        Pageable pageable = PageRequest.of(page, size);
 
-            PostListResponse response = new PostListResponse(
-                    post.getPostId(),
-                    post.getTitle(),
-                    likeCount,
-                    commentCount,
-                    post.getViewCount(),
-                    post.getUser().getNickname()
-            );
-
-            responses.add(response);
-        }
-
-        return responses;
+        return postRepository.findPostList(pageable);
     }
 
     @Transactional
@@ -62,15 +49,6 @@ public class PostService {
             image = images.get(0).getImage();
         }
 
-        Comment commentEntity =
-                commentRepository.findFirstByPost(post).orElse(null);
-
-        String comment = null;
-
-        if (commentEntity != null) {
-            comment = commentEntity.getContent();
-        }
-
         Integer likeCount = postLikeRepository.countByPost(post);
         Integer commentCount = commentRepository.countByPost(post);
 
@@ -82,8 +60,7 @@ public class PostService {
                 post.getContent(),
                 likeCount,
                 post.getViewCount(),
-                commentCount,
-                comment
+                commentCount
         );
     }
 
@@ -119,6 +96,10 @@ public class PostService {
     public PostUpdateResponse updatePost(Long postId, PostUpdateRequest request) {
         Post post = findPost(postId);
 
+        if (!post.getUser().getUserId().equals(request.getUserId())) {
+            throw new UnauthorizedException(MessageCode.POST_UPDATE_FORBIDDEN.getMessage());
+        }
+
         post.setTitle(request.getTitle());
         post.setContent(request.getContent());
 
@@ -126,8 +107,17 @@ public class PostService {
     }
 
     @Transactional
-    public void deletePost(Long postId) {
+    public void deletePost(Long postId, PostDeleteRequest request) {
         Post post = findPost(postId);
+
+        if (!post.getUser().getUserId().equals(request.getUserId())) {
+            throw new UnauthorizedException(MessageCode.POST_DELETE_FORBIDDEN.getMessage());
+        }
+
+        commentRepository.deleteByPost(post);
+        postLikeRepository.deleteByPost(post);
+        postImageRepository.deleteByPost(post);
+
         postRepository.delete(post);
     }
 

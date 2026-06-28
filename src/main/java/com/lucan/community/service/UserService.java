@@ -9,7 +9,6 @@ import com.lucan.community.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.DeleteMapping;
 
 @Service
 @RequiredArgsConstructor
@@ -57,7 +56,8 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UnauthorizedException(MessageCode.LOGIN_REQUIRED.getMessage()));
 
-        if (userRepository.existsByNickname(request.getNickname())) {
+        if (!user.getNickname().equals(request.getNickname())
+                && userRepository.existsByNickname(request.getNickname())) {
             throw new ConflictException(MessageCode.NICKNAME_ALREADY_EXISTS.getMessage());
         }
 
@@ -71,6 +71,10 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UnauthorizedException(MessageCode.LOGIN_REQUIRED.getMessage()));
 
+        if (!user.getPassword().equals(request.getCurrentPassword())) {
+            throw new UnauthorizedException(MessageCode.CURRENT_PASSWORD_NOT_MATCH.getMessage());
+        }
+
         validatePasswordMatch(request.getPassword(), request.getPasswordConfirm());
 
         user.setPassword(request.getPassword());
@@ -82,7 +86,7 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UnauthorizedException(MessageCode.LOGIN_REQUIRED.getMessage()));
 
-        userRepository.delete(user);
+        user.delete();
     }
 
     public void logout(Long userId) {

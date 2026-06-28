@@ -21,6 +21,7 @@ public class User {
     private String profileImage;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private Boolean deleted = false;
 
     protected User() {
     }
@@ -41,5 +42,15 @@ public class User {
     @PreUpdate
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public void delete() {
+        this.deleted = true;
+        this.nickname = "탈퇴 유저";
+    }
+
+    public void update(String nickname, String profileImage) {
+        this.nickname = nickname;
+        this.profileImage = profileImage;
     }
 }

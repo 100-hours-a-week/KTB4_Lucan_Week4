@@ -1,15 +1,14 @@
 package com.lucan.community.controller;
 
-import com.lucan.community.dto.comment.CommentCreateRequest;
-import com.lucan.community.dto.comment.CommentCreateResponse;
-import com.lucan.community.dto.comment.CommentUpdateRequest;
-import com.lucan.community.dto.comment.CommentUpdateResponse;
+import com.lucan.community.dto.comment.*;
 import com.lucan.community.dto.response.ApiResponse;
 import com.lucan.community.message.MessageCode;
 import com.lucan.community.service.CommentService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/posts")
@@ -28,6 +27,17 @@ public class CommentController {
     }
 
     @ResponseStatus(HttpStatus.OK)
+    @GetMapping("/{postId}/comments")
+    public ApiResponse getComments(@PathVariable Long postId) {
+
+        List<CommentListResponse> comments = commentService.getComments(postId);
+
+        return new ApiResponse(MessageCode.GET_COMMENTS_SUCCESS.getMessage(), comments
+        );
+    }
+
+
+    @ResponseStatus(HttpStatus.OK)
     @PatchMapping("/{postId}/comments/{commentId}")
     public ApiResponse updateComment(@PathVariable Long postId, @PathVariable Long commentId, @Valid @RequestBody CommentUpdateRequest request) {
         CommentUpdateResponse response = commentService.updateComment(postId, commentId, request);
@@ -37,8 +47,8 @@ public class CommentController {
 
     @ResponseStatus(HttpStatus.OK)
     @DeleteMapping("/{postId}/comments/{commentId}")
-    public ApiResponse deleteComment(@PathVariable Long postId, @PathVariable Long commentId) {
-        commentService.deleteComment(postId, commentId);
+    public ApiResponse deleteComment(@PathVariable Long postId, @PathVariable Long commentId, @RequestBody CommentDeleteRequest request) {
+        commentService.deleteComment(postId, commentId, request);
 
         return new ApiResponse(MessageCode.COMMENT_DELETE_SUCCESS.getMessage(), null);
     }

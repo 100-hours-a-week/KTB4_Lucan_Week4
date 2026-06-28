@@ -15,11 +15,12 @@ public class PostLike {
     @Column(name = "like_id")
     private Long likeId;
     private LocalDateTime createdAt;
-    @ManyToOne
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id")
     private Post post;
 

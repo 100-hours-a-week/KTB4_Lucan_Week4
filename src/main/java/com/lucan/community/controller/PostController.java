@@ -24,8 +24,8 @@ public class PostController {
 
     @ResponseStatus(HttpStatus.OK)
     @GetMapping
-    public ApiResponse getPosts() {
-        List<PostListResponse> response = postService.getPosts();
+    public ApiResponse getPosts(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
+        List<PostListResponse> response = postService.getPosts(page, size);
         return new ApiResponse(MessageCode.GET_POSTS_SUCCESS.getMessage(), response);
     }
 
@@ -55,8 +55,8 @@ public class PostController {
 
     @ResponseStatus(HttpStatus.OK)
     @DeleteMapping("/{postId}")
-    public ApiResponse deletePost(@PathVariable Long postId) {
-        postService.deletePost(postId);
+    public ApiResponse deletePost(@PathVariable Long postId, @RequestBody PostDeleteRequest request) {
+        postService.deletePost(postId, request);
         return new ApiResponse(MessageCode.POST_DELETE_SUCCESS.getMessage(), null);
     }
 
