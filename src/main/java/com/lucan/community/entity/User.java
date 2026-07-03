@@ -48,6 +48,9 @@ public class User {
         this.deleted = true;
         this.nickname = "탈퇴 유저";
     }
+    public boolean isDeleted() {
+        return deleted;
+    }
 
     public void update(String nickname, String profileImage) {
         this.nickname = nickname;

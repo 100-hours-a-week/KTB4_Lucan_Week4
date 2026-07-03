@@ -28,12 +28,14 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiResponse> handleIllegalArgumentException(IllegalArgumentException e) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse("invalid_request", null));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ApiResponse(e.getMessage(), null));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse> handleValidationException(MethodArgumentNotValidException e) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse("invalid_request", null));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ApiResponse("invalid_request", null));
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)

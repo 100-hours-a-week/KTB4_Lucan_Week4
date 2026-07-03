@@ -47,7 +47,15 @@ public class UserService {
             throw new UnauthorizedException(MessageCode.LOGIN_FAILED.getMessage());
         }
 
-        return new LoginResponse(savedUser.getUserId());
+        if (savedUser.isDeleted()) {
+            throw new UnauthorizedException(MessageCode.LOGIN_FAILED.getMessage());
+        }
+
+        return new LoginResponse(
+                savedUser.getUserId(),
+                savedUser.getEmail(),
+                savedUser.getNickname()
+        );
     }
 
     @Transactional

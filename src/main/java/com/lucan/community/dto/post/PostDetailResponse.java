@@ -1,7 +1,9 @@
 package com.lucan.community.dto.post;
 
-import lombok.Getter;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+import java.time.LocalDateTime;
 
 @Getter
 @AllArgsConstructor
@@ -15,4 +17,7 @@ public class PostDetailResponse {
     private Integer likeCount;
     private Integer viewCount;
     private Integer commentCount;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    private Boolean liked;
 }

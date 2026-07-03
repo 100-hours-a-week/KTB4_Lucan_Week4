@@ -33,7 +33,7 @@ public class PostService {
 
         Pageable pageable = PageRequest.of(page, size);
 
-        return postRepository.findPostList(pageable);
+        return postRepository.findPostList(pageable).getContent();
     }
 
     @Transactional
@@ -52,6 +52,9 @@ public class PostService {
         Integer likeCount = postLikeRepository.countByPost(post);
         Integer commentCount = commentRepository.countByPost(post);
 
+        boolean liked =
+                postLikeRepository.existsByPost_PostIdAndUser_UserId(postId, 1L);
+
         return new PostDetailResponse(
                 post.getPostId(),
                 post.getTitle(),
@@ -60,16 +63,24 @@ public class PostService {
                 post.getContent(),
                 likeCount,
                 post.getViewCount(),
-                commentCount
+                commentCount,
+                post.getCreatedAt(),
+                post.getUpdatedAt(),
+                liked
         );
     }
 
     @Transactional
     public PostCreateResponse createPost(PostCreateRequest request) {
+
         User user = userRepository.findById(request.getUserId()).orElse(null);
 
         if (user == null) {
             throw new NotFoundException(MessageCode.LOGIN_REQUIRED.getMessage());
+        }
+
+        if (user.isDeleted()) {
+            throw new UnauthorizedException(MessageCode.LOGIN_REQUIRED.getMessage());
         }
 
         Post post = new Post(
@@ -96,12 +107,17 @@ public class PostService {
     public PostUpdateResponse updatePost(Long postId, PostUpdateRequest request) {
         Post post = findPost(postId);
 
-        if (!post.getUser().getUserId().equals(request.getUserId())) {
-            throw new UnauthorizedException(MessageCode.POST_UPDATE_FORBIDDEN.getMessage());
-        }
-
         post.setTitle(request.getTitle());
         post.setContent(request.getContent());
+
+        if (request.getImageFile() != null) {
+            postImageRepository.deleteByPost(post);
+
+            if (!request.getImageFile().isBlank()) {
+                PostImage postImage = new PostImage(request.getImageFile(), post);
+                postImageRepository.save(postImage);
+            }
+        }
 
         return new PostUpdateResponse(post.getPostId());
     }
@@ -123,12 +139,17 @@ public class PostService {
 
     @Transactional
     public LikeResponse createLike(Long postId, LikeRequest request) {
+
         Post post = findPost(postId);
 
         User user = userRepository.findById(request.getUserId()).orElse(null);
 
         if (user == null) {
             throw new NotFoundException(MessageCode.LOGIN_REQUIRED.getMessage());
+        }
+
+        if (user.isDeleted()) {
+            throw new UnauthorizedException(MessageCode.LOGIN_REQUIRED.getMessage());
         }
 
         if (postLikeRepository.existsByUserAndPost(user, post)) {

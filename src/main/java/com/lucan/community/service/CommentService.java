@@ -27,6 +27,7 @@ public class CommentService {
 
     @Transactional
     public CommentCreateResponse createComment(Long postId, CommentCreateRequest request) {
+
         Post post = postRepository.findById(postId).orElse(null);
 
         if (post == null) {
@@ -37,6 +38,10 @@ public class CommentService {
 
         if (user == null) {
             throw new NotFoundException(MessageCode.LOGIN_REQUIRED.getMessage());
+        }
+
+        if (user.isDeleted()) {
+            throw new UnauthorizedException(MessageCode.LOGIN_REQUIRED.getMessage());
         }
 
         Comment comment = new Comment(
@@ -63,7 +68,8 @@ public class CommentService {
                         comment.getCommentId(),
                         comment.getContent(),
                         comment.getUser().getNickname(),
-                        comment.getCreatedAt()
+                        comment.getCreatedAt(),
+                        comment.getUpdatedAt()
                 ))
                 .toList();
     }
