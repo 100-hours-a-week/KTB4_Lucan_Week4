@@ -37,7 +37,7 @@ public class PostService {
     }
 
     @Transactional
-    public PostDetailResponse getPost(Long postId) {
+    public PostDetailResponse getPost(Long postId, Long userId) {
         Post post = findPost(postId);
 
         post.increaseViewCount();
@@ -52,8 +52,7 @@ public class PostService {
         Integer likeCount = postLikeRepository.countByPost(post);
         Integer commentCount = commentRepository.countByPost(post);
 
-        boolean liked =
-                postLikeRepository.existsByPost_PostIdAndUser_UserId(postId, 1L);
+        boolean liked = postLikeRepository.existsByPost_PostIdAndUser_UserId(postId, userId);
 
         return new PostDetailResponse(
                 post.getPostId(),
@@ -106,6 +105,12 @@ public class PostService {
     @Transactional
     public PostUpdateResponse updatePost(Long postId, PostUpdateRequest request) {
         Post post = findPost(postId);
+
+        if (!post.getUser().getUserId().equals(request.getUserId())) {
+            throw new UnauthorizedException(
+                    MessageCode.POST_UPDATE_FORBIDDEN.getMessage()
+            );
+        }
 
         post.setTitle(request.getTitle());
         post.setContent(request.getContent());

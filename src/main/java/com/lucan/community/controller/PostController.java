@@ -31,8 +31,8 @@ public class PostController {
 
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("/{postId}")
-    public ApiResponse getPost(@PathVariable Long postId) {
-        PostDetailResponse response = postService.getPost(postId);
+    public ApiResponse getPost(@PathVariable Long postId, @RequestParam Long userId) {
+        PostDetailResponse response = postService.getPost(postId, userId);
         return new ApiResponse(MessageCode.GET_POST_SUCCESS.getMessage(), response);
     }
 

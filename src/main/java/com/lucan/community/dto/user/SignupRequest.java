@@ -1,5 +1,6 @@
 package com.lucan.community.dto.user;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import jakarta.validation.constraints.Email;
@@ -8,6 +9,7 @@ import jakarta.validation.constraints.Size;
 
 @Getter
 @NoArgsConstructor
+@AllArgsConstructor
 public class SignupRequest {
 
     @NotBlank(message = "이메일을 입력해주세요.")

@@ -7,6 +7,7 @@ import com.lucan.community.exception.UnauthorizedException;
 import com.lucan.community.message.MessageCode;
 import com.lucan.community.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional
     public SignupResponse signup(SignupRequest request) {
@@ -26,9 +28,11 @@ public class UserService {
             throw new ConflictException(MessageCode.NICKNAME_ALREADY_EXISTS.getMessage());
         }
 
+        String encodedPassword = passwordEncoder.encode(request.getPassword());
+
         User user = new User(
                 request.getEmail(),
-                request.getPassword(),
+                encodedPassword,
                 request.getNickname(),
                 request.getProfileImage()
         );
@@ -43,7 +47,7 @@ public class UserService {
         User savedUser = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new UnauthorizedException(MessageCode.LOGIN_FAILED.getMessage()));
 
-        if (!savedUser.getPassword().equals(request.getPassword())) {
+        if (!passwordEncoder.matches(request.getPassword(),savedUser.getPassword())) {
             throw new UnauthorizedException(MessageCode.LOGIN_FAILED.getMessage());
         }
 
@@ -79,13 +83,13 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UnauthorizedException(MessageCode.LOGIN_REQUIRED.getMessage()));
 
-        if (!user.getPassword().equals(request.getCurrentPassword())) {
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
             throw new UnauthorizedException(MessageCode.CURRENT_PASSWORD_NOT_MATCH.getMessage());
         }
 
         validatePasswordMatch(request.getPassword(), request.getPasswordConfirm());
 
-        user.setPassword(request.getPassword());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
     }
 
     @Transactional
