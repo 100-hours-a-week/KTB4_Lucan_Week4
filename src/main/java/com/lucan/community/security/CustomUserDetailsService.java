@@ -1,4 +1,4 @@
-package com.lucan.community.service;
+package com.lucan.community.security;
 
 import com.lucan.community.entity.User;
 import com.lucan.community.repository.UserRepository;
@@ -25,11 +25,6 @@ public class CustomUserDetailsService implements UserDetailsService {
             throw new UsernameNotFoundException("탈퇴한 사용자입니다.");
         }
 
-        return org.springframework.security.core.userdetails.User
-                .builder()
-                .username(user.getEmail())
-                .password(user.getPassword())
-                .roles("USER")
-                .build();
+        return new CustomUserDetails(user);
     }
 }

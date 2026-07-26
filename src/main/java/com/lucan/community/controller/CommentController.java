@@ -3,9 +3,11 @@ package com.lucan.community.controller;
 import com.lucan.community.dto.comment.*;
 import com.lucan.community.dto.response.ApiResponse;
 import com.lucan.community.message.MessageCode;
+import com.lucan.community.security.CustomUserDetails;
 import com.lucan.community.service.CommentService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,8 +22,11 @@ public class CommentController {
 
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("/{postId}/comments")
-    public ApiResponse createComment(@PathVariable Long postId, @Valid @RequestBody CommentCreateRequest request) {
-        CommentCreateResponse response = commentService.createComment(postId, request);
+    public ApiResponse createComment(
+            @PathVariable Long postId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestBody CommentCreateRequest request) {
+        CommentCreateResponse response = commentService.createComment(postId, userDetails.getUserId(), request);
 
         return new ApiResponse(MessageCode.CREATE_COMMENT_SUCCESS.getMessage(), response);
     }
@@ -39,16 +44,23 @@ public class CommentController {
 
     @ResponseStatus(HttpStatus.OK)
     @PatchMapping("/{postId}/comments/{commentId}")
-    public ApiResponse updateComment(@PathVariable Long postId, @PathVariable Long commentId, @Valid @RequestBody CommentUpdateRequest request) {
-        CommentUpdateResponse response = commentService.updateComment(postId, commentId, request);
+    public ApiResponse updateComment(
+            @PathVariable Long postId,
+            @PathVariable Long commentId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestBody CommentUpdateRequest request) {
+        CommentUpdateResponse response = commentService.updateComment(postId, commentId, userDetails.getUserId(), request);
 
         return new ApiResponse(MessageCode.COMMENT_UPDATE_SUCCESS.getMessage(), response);
     }
 
     @ResponseStatus(HttpStatus.OK)
     @DeleteMapping("/{postId}/comments/{commentId}")
-    public ApiResponse deleteComment(@PathVariable Long postId, @PathVariable Long commentId, @RequestBody CommentDeleteRequest request) {
-        commentService.deleteComment(postId, commentId, request);
+    public ApiResponse deleteComment(
+            @PathVariable Long postId,
+            @PathVariable Long commentId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        commentService.deleteComment(postId, commentId, userDetails.getUserId());
 
         return new ApiResponse(MessageCode.COMMENT_DELETE_SUCCESS.getMessage(), null);
     }

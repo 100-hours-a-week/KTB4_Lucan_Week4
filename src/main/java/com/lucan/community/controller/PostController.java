@@ -1,13 +1,14 @@
 package com.lucan.community.controller;
 
-import com.lucan.community.dto.like.LikeRequest;
 import com.lucan.community.dto.like.LikeResponse;
 import com.lucan.community.dto.post.*;
 import com.lucan.community.dto.response.ApiResponse;
 import com.lucan.community.message.MessageCode;
+import com.lucan.community.security.CustomUserDetails;
 import com.lucan.community.service.PostService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,15 +32,17 @@ public class PostController {
 
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("/{postId}")
-    public ApiResponse getPost(@PathVariable Long postId, @RequestParam Long userId) {
-        PostDetailResponse response = postService.getPost(postId, userId);
+    public ApiResponse getPost(@PathVariable Long postId, @AuthenticationPrincipal CustomUserDetails userDetails) {
+        PostDetailResponse response = postService.getPost(postId, userDetails.getUserId());
         return new ApiResponse(MessageCode.GET_POST_SUCCESS.getMessage(), response);
     }
 
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping
-    public ApiResponse createPost(@Valid @RequestBody PostCreateRequest request) {
-        PostCreateResponse response = postService.createPost(request);
+    public ApiResponse createPost(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestBody PostCreateRequest request) {
+        PostCreateResponse response = postService.createPost(userDetails.getUserId(), request);
         return new ApiResponse(MessageCode.CREATE_POST_SUCCESS.getMessage(), response);
     }
 
@@ -47,16 +50,19 @@ public class PostController {
     @PatchMapping("/{postId}")
     public ApiResponse updatePost(
             @PathVariable Long postId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody PostUpdateRequest request
     ) {
-        PostUpdateResponse response = postService.updatePost(postId, request);
+        PostUpdateResponse response = postService.updatePost(postId, userDetails.getUserId(), request);
         return new ApiResponse(MessageCode.POST_UPDATE_SUCCESS.getMessage(), response);
     }
 
     @ResponseStatus(HttpStatus.OK)
     @DeleteMapping("/{postId}")
-    public ApiResponse deletePost(@PathVariable Long postId, @RequestBody PostDeleteRequest request) {
-        postService.deletePost(postId, request);
+    public ApiResponse deletePost(
+            @PathVariable Long postId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        postService.deletePost(postId, userDetails.getUserId());
         return new ApiResponse(MessageCode.POST_DELETE_SUCCESS.getMessage(), null);
     }
 
@@ -64,9 +70,8 @@ public class PostController {
     @PostMapping("/{postId}/likes")
     public ApiResponse createLike(
             @PathVariable Long postId,
-            @RequestBody LikeRequest request
-    ) {
-        LikeResponse response = postService.createLike(postId, request);
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        LikeResponse response = postService.createLike(postId, userDetails.getUserId());
         return new ApiResponse(MessageCode.LIKE_SUCCESS.getMessage(), response);
     }
 
@@ -74,9 +79,8 @@ public class PostController {
     @DeleteMapping("/{postId}/likes")
     public ApiResponse deleteLike(
             @PathVariable Long postId,
-            @RequestBody LikeRequest request
-    ) {
-        LikeResponse response = postService.deleteLike(postId, request);
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        LikeResponse response = postService.deleteLike(postId, userDetails.getUserId());
         return new ApiResponse(MessageCode.UNLIKE_SUCCESS.getMessage(), response);
     }
 }

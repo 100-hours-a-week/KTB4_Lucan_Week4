@@ -26,7 +26,7 @@ public class CommentService {
     private final UserRepository userRepository;
 
     @Transactional
-    public CommentCreateResponse createComment(Long postId, CommentCreateRequest request) {
+    public CommentCreateResponse createComment(Long postId, Long userId, CommentCreateRequest request) {
 
         Post post = postRepository.findById(postId).orElse(null);
 
@@ -34,7 +34,7 @@ public class CommentService {
             throw new NotFoundException(MessageCode.POST_NOT_FOUND.getMessage());
         }
 
-        User user = userRepository.findById(request.getUserId()).orElse(null);
+        User user = userRepository.findById(userId).orElse(null);
 
         if (user == null) {
             throw new NotFoundException(MessageCode.LOGIN_REQUIRED.getMessage());
@@ -75,7 +75,7 @@ public class CommentService {
     }
 
     @Transactional
-    public CommentUpdateResponse updateComment(Long postId, Long commentId, CommentUpdateRequest request) {
+    public CommentUpdateResponse updateComment(Long postId, Long commentId, Long userId, CommentUpdateRequest request) {
         Post post = postRepository.findById(postId).orElse(null);
 
         if (post == null) {
@@ -92,7 +92,7 @@ public class CommentService {
             throw new NotFoundException(MessageCode.COMMENT_NOT_FOUND.getMessage());
         }
 
-        if (!comment.getUser().getUserId().equals(request.getUserId())) {
+        if (!comment.getUser().getUserId().equals(userId)) {
             throw new UnauthorizedException(MessageCode.COMMENT_UPDATE_FORBIDDEN.getMessage());
         }
 
@@ -102,7 +102,7 @@ public class CommentService {
     }
 
     @Transactional
-    public void deleteComment(Long postId, Long commentId, CommentDeleteRequest request) {
+    public void deleteComment(Long postId, Long commentId, Long userId) {
         Post post = postRepository.findById(postId).orElse(null);
 
         if (post == null) {
@@ -119,7 +119,7 @@ public class CommentService {
             throw new NotFoundException(MessageCode.COMMENT_NOT_FOUND.getMessage());
         }
 
-        if (!comment.getUser().getUserId().equals(request.getUserId())) {
+        if (!comment.getUser().getUserId().equals(userId)) {
             throw new UnauthorizedException(MessageCode.COMMENT_DELETE_FORBIDDEN.getMessage());
         }
 

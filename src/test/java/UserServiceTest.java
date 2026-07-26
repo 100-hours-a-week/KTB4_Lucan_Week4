@@ -124,112 +124,7 @@ class UserServiceTest {
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
-    @Test
-    @DisplayName("로그인 성공")
-    void loginSuccess() {
 
-        LoginRequest request = new LoginRequest(
-                "test@test.com",
-                "password123"
-        );
-
-        User savedUser = new User(
-                "test@test.com",
-                "encodedPassword",
-                "lucan",
-                null
-        );
-
-        given(userRepository.findByEmail(request.getEmail()))
-                .willReturn(Optional.of(savedUser));
-
-        given(passwordEncoder.matches(
-                request.getPassword(),
-                savedUser.getPassword()
-        )).willReturn(true);
-
-        LoginResponse response = userService.login(request);
-
-        assertThat(response).isNotNull();
-        assertThat(response.getEmail())
-                .isEqualTo("test@test.com");
-        assertThat(response.getNickname())
-                .isEqualTo("lucan");
-    }
-
-    @Test
-    @DisplayName("이메일 없으면 로그인 실패")
-    void loginFailWhenEmailNotFound() {
-
-        LoginRequest request = new LoginRequest(
-                "test@test.com",
-                "password123"
-        );
-
-        given(userRepository.findByEmail(request.getEmail()))
-                .willReturn(Optional.empty());
-
-        assertThatThrownBy(() -> userService.login(request))
-                .isInstanceOf(UnauthorizedException.class);
-    }
-
-    @Test
-    @DisplayName("비밀번호가 일치하지 않으면 로그인 실패")
-    void loginFailWhenPasswordNotMatch() {
-
-        LoginRequest request = new LoginRequest(
-                "test@test.com",
-                "password123"
-        );
-
-        User savedUser = new User(
-                "test@test.com",
-                "encodedPassword",
-                "lucan",
-                null
-        );
-
-        given(userRepository.findByEmail(request.getEmail()))
-                .willReturn(Optional.of(savedUser));
-
-        given(passwordEncoder.matches(
-                request.getPassword(),
-                savedUser.getPassword()
-        )).willReturn(false);
-
-        assertThatThrownBy(() -> userService.login(request))
-                .isInstanceOf(UnauthorizedException.class);
-    }
-
-    @Test
-    @DisplayName("탈퇴 유저 로그인 실패")
-    void loginFailWhenDeletedUser() {
-
-        LoginRequest request = new LoginRequest(
-                "test@test.com",
-                "password123"
-        );
-
-        User savedUser = new User(
-                "test@test.com",
-                "encodedPassword",
-                "lucan",
-                null
-        );
-
-        savedUser.delete();
-
-        given(userRepository.findByEmail(request.getEmail()))
-                .willReturn(Optional.of(savedUser));
-
-        given(passwordEncoder.matches(
-                request.getPassword(),
-                savedUser.getPassword()
-        )).willReturn(true);
-
-        assertThatThrownBy(() -> userService.login(request))
-                .isInstanceOf(UnauthorizedException.class);
-    }
 
     @Test
     @DisplayName("회원 정보 수정 성공")
@@ -458,32 +353,6 @@ class UserServiceTest {
                 .willReturn(Optional.empty());
 
         assertThatThrownBy(() -> userService.deleteUser(userId))
-                .isInstanceOf(UnauthorizedException.class);
-    }
-
-    @Test
-    @DisplayName("로그아웃 성공")
-    void logoutSuccess() {
-
-        Long userId = 1L;
-
-        given(userRepository.existsById(userId))
-                .willReturn(true);
-
-        assertThatCode(() -> userService.logout(userId))
-                .doesNotThrowAnyException();
-    }
-
-    @Test
-    @DisplayName("존재하지 않는 회원 로그아웃 실패")
-    void logoutFailWhenUserNotFound() {
-
-        Long userId = 1L;
-
-        given(userRepository.existsById(userId))
-                .willReturn(false);
-
-        assertThatThrownBy(() -> userService.logout(userId))
                 .isInstanceOf(UnauthorizedException.class);
     }
 }

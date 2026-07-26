@@ -8,8 +8,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class CommentUpdateRequest {
 
-    private Long userId;
-
     @NotBlank(message = "댓글 내용을 입력해주세요.")
     private String content;
 }

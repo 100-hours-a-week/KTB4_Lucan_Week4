@@ -1,10 +1,9 @@
 package com.lucan.community.config;
 
-import com.lucan.community.entity.User;
-import com.lucan.community.repository.UserRepository;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -20,16 +19,12 @@ import java.util.List;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final UserRepository userRepository;
-
-    public SecurityConfig(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
-
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .cors(cors ->
+                        cors.configurationSource(corsConfigurationSource())
+                )
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
@@ -39,6 +34,9 @@ public class SecurityConfig {
                                 "/Js/**",
                                 "/images/**"
                         ).permitAll()
+
+                        .requestMatchers(HttpMethod.GET, "/posts").permitAll()
+
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
@@ -46,39 +44,42 @@ public class SecurityConfig {
                         .usernameParameter("email")
                         .passwordParameter("password")
                         .successHandler((request, response, authentication) -> {
-                            String email = authentication.getName();
-
-                            User user = userRepository.findByEmail(email).orElseThrow();
-
                             response.setStatus(HttpServletResponse.SC_OK);
-                            response.setContentType("application/json;charset=UTF-8");
+                            response.setContentType(
+                                    "application/json;charset=UTF-8"
+                            );
 
                             response.getWriter().write("""
                                     {
-                                      "message": "login_success",
-                                      "data": {
-                                        "userId": %d,
-                                        "email": "%s",
-                                        "nickname": "%s"
-                                      }
+                                      "message": "login_success"
                                     }
-                                    """.formatted(
-                                    user.getUserId(),
-                                    user.getEmail(),
-                                    user.getNickname()
-                            ));
+                                    """);
                         })
                         .failureHandler((request, response, exception) -> {
-                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setStatus(
+                                    HttpServletResponse.SC_UNAUTHORIZED
+                            );
                         })
                 )
                 .logout(logout -> logout
                         .logoutUrl("/users/logout")
-                        .logoutSuccessHandler((request, response, authentication) -> {
-                            response.setStatus(HttpServletResponse.SC_OK);
-                        })
+                        .logoutSuccessHandler(
+                                (request, response, authentication) -> {
+                                    response.setStatus(
+                                            HttpServletResponse.SC_OK
+                                    );
+                                }
+                        )
+                )
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(
+                                (request, response, authException) -> {
+                                    response.sendError(
+                                            HttpServletResponse.SC_UNAUTHORIZED
+                                    );
+                                }
+                        )
                 );
-
 
         return http.build();
     }
@@ -92,12 +93,25 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(List.of("http://localhost:5500"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Content-Type"));
+        configuration.setAllowedOrigins(
+                List.of("http://127.0.0.1:5500")
+        );
+        configuration.setAllowedMethods(
+                List.of(
+                        "GET",
+                        "POST",
+                        "PATCH",
+                        "DELETE",
+                        "OPTIONS"
+                )
+        );
+        configuration.setAllowedHeaders(
+                List.of("Content-Type")
+        );
         configuration.setAllowCredentials(true);
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        UrlBasedCorsConfigurationSource source =
+                new UrlBasedCorsConfigurationSource();
 
         source.registerCorsConfiguration("/**", configuration);
 

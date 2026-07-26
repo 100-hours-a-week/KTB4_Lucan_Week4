@@ -1,6 +1,5 @@
 package com.lucan.community.service;
 
-import com.lucan.community.dto.like.LikeRequest;
 import com.lucan.community.dto.like.LikeResponse;
 import com.lucan.community.dto.post.*;
 import com.lucan.community.entity.*;
@@ -70,9 +69,9 @@ public class PostService {
     }
 
     @Transactional
-    public PostCreateResponse createPost(PostCreateRequest request) {
+    public PostCreateResponse createPost(Long userId, PostCreateRequest request) {
 
-        User user = userRepository.findById(request.getUserId()).orElse(null);
+        User user = userRepository.findById(userId).orElse(null);
 
         if (user == null) {
             throw new NotFoundException(MessageCode.LOGIN_REQUIRED.getMessage());
@@ -103,10 +102,10 @@ public class PostService {
     }
 
     @Transactional
-    public PostUpdateResponse updatePost(Long postId, PostUpdateRequest request) {
+    public PostUpdateResponse updatePost(Long postId, Long userId, PostUpdateRequest request) {
         Post post = findPost(postId);
 
-        if (!post.getUser().getUserId().equals(request.getUserId())) {
+        if (!post.getUser().getUserId().equals(userId)) {
             throw new UnauthorizedException(
                     MessageCode.POST_UPDATE_FORBIDDEN.getMessage()
             );
@@ -128,10 +127,10 @@ public class PostService {
     }
 
     @Transactional
-    public void deletePost(Long postId, PostDeleteRequest request) {
+    public void deletePost(Long postId, Long userId) {
         Post post = findPost(postId);
 
-        if (!post.getUser().getUserId().equals(request.getUserId())) {
+        if (!post.getUser().getUserId().equals(userId)) {
             throw new UnauthorizedException(MessageCode.POST_DELETE_FORBIDDEN.getMessage());
         }
 
@@ -143,11 +142,11 @@ public class PostService {
     }
 
     @Transactional
-    public LikeResponse createLike(Long postId, LikeRequest request) {
+    public LikeResponse createLike(Long postId, Long userId) {
 
         Post post = findPost(postId);
 
-        User user = userRepository.findById(request.getUserId()).orElse(null);
+        User user = userRepository.findById(userId).orElse(null);
 
         if (user == null) {
             throw new NotFoundException(MessageCode.LOGIN_REQUIRED.getMessage());
@@ -170,10 +169,10 @@ public class PostService {
     }
 
     @Transactional
-    public LikeResponse deleteLike(Long postId, LikeRequest request) {
+    public LikeResponse deleteLike(Long postId, Long userId) {
         Post post = findPost(postId);
 
-        User user = userRepository.findById(request.getUserId()).orElse(null);
+        User user = userRepository.findById(userId).orElse(null);
 
         if (user == null) {
             throw new NotFoundException(MessageCode.LOGIN_REQUIRED.getMessage());

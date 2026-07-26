@@ -42,26 +42,6 @@ public class UserService {
         return new SignupResponse(savedUser.getUserId());
     }
 
-    public LoginResponse login(LoginRequest request) {
-
-        User savedUser = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new UnauthorizedException(MessageCode.LOGIN_FAILED.getMessage()));
-
-        if (!passwordEncoder.matches(request.getPassword(),savedUser.getPassword())) {
-            throw new UnauthorizedException(MessageCode.LOGIN_FAILED.getMessage());
-        }
-
-        if (savedUser.isDeleted()) {
-            throw new UnauthorizedException(MessageCode.LOGIN_FAILED.getMessage());
-        }
-
-        return new LoginResponse(
-                savedUser.getUserId(),
-                savedUser.getEmail(),
-                savedUser.getNickname()
-        );
-    }
-
     @Transactional
     public void updateUser(Long userId, UserUpdateRequest request) {
 
@@ -99,13 +79,6 @@ public class UserService {
                 .orElseThrow(() -> new UnauthorizedException(MessageCode.LOGIN_REQUIRED.getMessage()));
 
         user.delete();
-    }
-
-    public void logout(Long userId) {
-
-        if (!userRepository.existsById(userId)) {
-            throw new UnauthorizedException(MessageCode.LOGIN_REQUIRED.getMessage());
-        }
     }
 
     private void validatePasswordMatch(String password, String passwordConfirm) {
