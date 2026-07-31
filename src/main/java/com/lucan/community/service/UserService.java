@@ -42,15 +42,21 @@ public class UserService {
         return new SignupResponse(savedUser.getUserId());
     }
 
+
     @Transactional
     public void updateUser(Long userId, UserUpdateRequest request) {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UnauthorizedException(MessageCode.LOGIN_REQUIRED.getMessage()));
 
-        if (!user.getNickname().equals(request.getNickname())
-                && userRepository.existsByNickname(request.getNickname())) {
-            throw new ConflictException(MessageCode.NICKNAME_ALREADY_EXISTS.getMessage());
+        if (user.getNickname().equals(request.getNickname())) {
+            throw new IllegalArgumentException(
+                    MessageCode.SAME_NICKNAME.getMessage());
+        }
+
+        if (userRepository.existsByNickname(request.getNickname())) {
+            throw new ConflictException(
+                    MessageCode.NICKNAME_ALREADY_EXISTS.getMessage());
         }
 
         user.setNickname(request.getNickname());
@@ -65,6 +71,10 @@ public class UserService {
 
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
             throw new UnauthorizedException(MessageCode.CURRENT_PASSWORD_NOT_MATCH.getMessage());
+        }
+
+        if (passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new IllegalArgumentException(MessageCode.SAME_AS_CURRENT_PASSWORD.getMessage());
         }
 
         validatePasswordMatch(request.getPassword(), request.getPasswordConfirm());

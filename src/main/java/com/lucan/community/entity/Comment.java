@@ -26,6 +26,7 @@ public class Comment {
     private Post post;
 
     protected Comment() {
+
     }
 
     public Comment(String content, User user, Post post) {

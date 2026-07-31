@@ -3,13 +3,13 @@ package com.lucan.community.message;
 public enum MessageCode {
 
     REGISTER_SUCCESS("register_success"),
-    LOGIN_SUCCESS("login_success"),
 
     USER_UPDATE_SUCCESS("user_update_success"),
+    SAME_NICKNAME("same_nickname"),
     CURRENT_PASSWORD_NOT_MATCH("current_password_not_match"),
     PASSWORD_UPDATE_SUCCESS("password_update_success"),
+    SAME_AS_CURRENT_PASSWORD("same_as_current_password"),
     USER_DELETE_SUCCESS("user_delete_success"),
-    LOGOUT_SUCCESS("logout_success"),
 
     GET_POSTS_SUCCESS("get_posts_success"),
     GET_POST_SUCCESS("get_post_success"),
@@ -29,7 +29,6 @@ public enum MessageCode {
     NICKNAME_ALREADY_EXISTS("nickname_already_exists"),
     PASSWORD_NOT_MATCH("password_not_match"),
 
-    LOGIN_FAILED("login_failed"),
     LOGIN_REQUIRED("login_required"),
 
     POST_NOT_FOUND("post_not_found"),

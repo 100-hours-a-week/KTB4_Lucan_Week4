@@ -58,10 +58,15 @@ public class CommentService {
     @Transactional(readOnly = true)
     public List<CommentListResponse> getComments(Long postId) {
 
-        Post post = postRepository.findById(postId).orElseThrow(() ->
-                        new NotFoundException(MessageCode.POST_NOT_FOUND.getMessage()));
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() ->
+                        new NotFoundException(
+                                MessageCode.POST_NOT_FOUND.getMessage()
+                        )
+                );
 
-        List<Comment> comments = commentRepository.findByPostOrderByCreatedAtDesc(post);
+        List<Comment> comments =
+                commentRepository.findByPostOrderByCreatedAtDesc(post);
 
         return comments.stream()
                 .map(comment -> new CommentListResponse(
