@@ -11,13 +11,20 @@ public class PostDetailResponse {
 
     private Long postId;
     private String title;
+
     private String nickname;
+    private String profileImage;
+
     private String imageFile;
+
     private String content;
+
     private Integer likeCount;
     private Integer viewCount;
     private Integer commentCount;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
     private Boolean liked;
 }

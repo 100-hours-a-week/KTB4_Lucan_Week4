@@ -6,6 +6,7 @@ import com.lucan.community.dto.response.ApiResponse;
 import com.lucan.community.message.MessageCode;
 import com.lucan.community.security.CustomUserDetails;
 import com.lucan.community.service.PostService;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -37,11 +38,30 @@ public class PostController {
         return new ApiResponse(MessageCode.GET_POST_SUCCESS.getMessage(), response);
     }
 
+    @ResponseStatus(HttpStatus.OK)
+    @PostMapping("/{postId}/views")
+    public ApiResponse increaseViewCount(
+            @PathVariable Long postId,
+            @RequestHeader("X-View-Event-Id") String viewEventId,
+            HttpSession session
+    ) {
+        postService.increaseViewCount(
+                postId,
+                viewEventId,
+                session
+        );
+
+        return new ApiResponse(
+                MessageCode.INCREASE_VIEW_COUNT_SUCCESS.getMessage(),
+                null
+        );
+    }
+
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping
     public ApiResponse createPost(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @Valid @RequestBody PostCreateRequest request) {
+            @Valid @ModelAttribute PostCreateRequest request) {
         PostCreateResponse response = postService.createPost(userDetails.getUserId(), request);
         return new ApiResponse(MessageCode.CREATE_POST_SUCCESS.getMessage(), response);
     }
@@ -51,7 +71,7 @@ public class PostController {
     public ApiResponse updatePost(
             @PathVariable Long postId,
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @Valid @RequestBody PostUpdateRequest request
+            @Valid @ModelAttribute PostUpdateRequest request
     ) {
         PostUpdateResponse response = postService.updatePost(postId, userDetails.getUserId(), request);
         return new ApiResponse(MessageCode.POST_UPDATE_SUCCESS.getMessage(), response);

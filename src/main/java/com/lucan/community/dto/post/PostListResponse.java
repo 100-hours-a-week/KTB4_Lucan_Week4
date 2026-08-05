@@ -13,17 +13,19 @@ public class PostListResponse {
     private Long commentCount;
     private Integer viewCount;
     private String nickname;
+    private String profileImage;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
     public PostListResponse(Long postId, String title, Long likeCount, Long commentCount,
-                            Integer viewCount, String nickname, LocalDateTime createdAt, LocalDateTime updatedAt) {
+                            Integer viewCount, String nickname,String profileImage, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.postId = postId;
         this.title = title;
         this.likeCount = likeCount;
         this.commentCount = commentCount;
         this.viewCount = viewCount;
         this.nickname = nickname;
+        this.profileImage = profileImage;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }

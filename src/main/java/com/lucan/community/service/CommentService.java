@@ -73,6 +73,7 @@ public class CommentService {
                         comment.getCommentId(),
                         comment.getContent(),
                         comment.getUser().getNickname(),
+                        comment.getUser().getProfileImage(),
                         comment.getCreatedAt(),
                         comment.getUpdatedAt()
                 ))

@@ -11,11 +11,14 @@ public enum MessageCode {
     SAME_AS_CURRENT_PASSWORD("same_as_current_password"),
     USER_DELETE_SUCCESS("user_delete_success"),
 
+    GET_USER_SUCCESS("get_user_success"),
+
     GET_POSTS_SUCCESS("get_posts_success"),
     GET_POST_SUCCESS("get_post_success"),
     CREATE_POST_SUCCESS("create_post_success"),
     POST_UPDATE_SUCCESS("post_update_success"),
     POST_DELETE_SUCCESS("post_delete_success"),
+    INCREASE_VIEW_COUNT_SUCCESS("increase_view_count_success"),
 
     CREATE_COMMENT_SUCCESS("create_comment_success"),
     GET_COMMENTS_SUCCESS("get_comments_success"),
@@ -36,6 +39,13 @@ public enum MessageCode {
 
     INVALID_REQUEST("invalid_request"),
     INTERNAL_SERVER_ERROR("internal_server_error"),
+
+    IMAGE_UPLOAD_SUCCESS("image_upload_success"),
+
+    IMAGE_FILE_EMPTY("image_file_empty"),
+    INVALID_IMAGE_FILE("invalid_image_file"),
+    IMAGE_UPLOAD_FAILED("image_upload_failed"),
+    IMAGE_DELETE_FAILED("image_delete_failed"),
 
     POST_UPDATE_FORBIDDEN("post_update_forbidden"),
     POST_DELETE_FORBIDDEN("post_delete_forbidden"),

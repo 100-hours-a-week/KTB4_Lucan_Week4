@@ -8,6 +8,7 @@ import com.lucan.community.exception.NotFoundException;
 import com.lucan.community.exception.UnauthorizedException;
 import com.lucan.community.message.MessageCode;
 import com.lucan.community.repository.*;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -26,6 +27,7 @@ public class PostService {
     private final CommentRepository commentRepository;
     private final PostLikeRepository postLikeRepository;
     private final PostImageRepository postImageRepository;
+    private final S3Service s3Service;
 
     @Transactional(readOnly = true)
     public List<PostListResponse> getPosts(int page, int size) {
@@ -39,13 +41,12 @@ public class PostService {
     public PostDetailResponse getPost(Long postId, Long userId) {
         Post post = findPost(postId);
 
-        post.increaseViewCount();
+        PostImage postImage = postImageRepository.findByPost(post).orElse(null);
 
-        List<PostImage> images = postImageRepository.findByPost(post);
         String image = null;
 
-        if (!images.isEmpty()) {
-            image = images.get(0).getImage();
+        if (postImage != null) {
+            image = postImage.getImage();
         }
 
         Integer likeCount = postLikeRepository.countByPost(post);
@@ -57,6 +58,7 @@ public class PostService {
                 post.getPostId(),
                 post.getTitle(),
                 post.getUser().getNickname(),
+                post.getUser().getProfileImage(),
                 image,
                 post.getContent(),
                 likeCount,
@@ -66,6 +68,27 @@ public class PostService {
                 post.getUpdatedAt(),
                 liked
         );
+    }
+
+    @Transactional
+    public void increaseViewCount(
+            Long postId,
+            String viewEventId,
+            HttpSession session
+    ) {
+        String sessionKey =
+                "processedViewEvent_" + viewEventId;
+
+        synchronized (session) {
+            if (session.getAttribute(sessionKey) != null) {
+                return;
+            }
+
+            session.setAttribute(sessionKey, true);
+        }
+
+        Post post = findPost(postId);
+        post.increaseViewCount();
     }
 
     @Transactional
@@ -89,11 +112,10 @@ public class PostService {
 
         Post savedPost = postRepository.save(post);
 
-        if (request.getImageFile() != null) {
-            PostImage postImage = new PostImage(
-                    request.getImageFile(),
-                    savedPost
-            );
+        if (request.getImageFile() != null && !request.getImageFile().isEmpty()) {
+            String imageUrl = s3Service.uploadImage(request.getImageFile(),"posts");
+
+            PostImage postImage = new PostImage(imageUrl,savedPost);
 
             postImageRepository.save(postImage);
         }
@@ -106,24 +128,53 @@ public class PostService {
         Post post = findPost(postId);
 
         if (!post.getUser().getUserId().equals(userId)) {
-            throw new UnauthorizedException(
-                    MessageCode.POST_UPDATE_FORBIDDEN.getMessage()
-            );
+            throw new UnauthorizedException(MessageCode.POST_UPDATE_FORBIDDEN.getMessage());
         }
 
-        post.setTitle(request.getTitle());
-        post.setContent(request.getContent());
+        String title = request.getTitle();
+        String content = request.getContent();
 
-        if (request.getImageFile() != null) {
-            postImageRepository.deleteByPost(post);
+        boolean hasTitle = title != null && !title.isBlank();
 
-            if (!request.getImageFile().isBlank()) {
-                PostImage postImage = new PostImage(request.getImageFile(), post);
-                postImageRepository.save(postImage);
+        boolean hasContent = content != null && !content.isBlank();
+
+        boolean hasImage = request.getImageFile() != null && !request.getImageFile().isEmpty();
+
+        if (!hasTitle && !hasContent && !hasImage) {
+            throw new IllegalArgumentException(MessageCode.INVALID_REQUEST.getMessage());
+        }
+
+        if (hasTitle) {
+            post.setTitle(title.trim());
+        }
+
+        if (hasContent) {
+            post.setContent(content.trim());
+        }
+
+        if (hasImage) {
+            PostImage existingImage = postImageRepository.findByPost(post).orElse(null);
+
+            String newImageUrl = s3Service.uploadImage(request.getImageFile(), "posts");
+
+            if (existingImage == null) {
+                PostImage newPostImage = new PostImage(newImageUrl, post);
+
+                postImageRepository.save(newPostImage);
+            } else {
+                String oldImageUrl = existingImage.getImage();
+
+                existingImage.setImage(newImageUrl);
+
+                if (oldImageUrl != null && !oldImageUrl.isBlank()) {
+                    s3Service.deleteImage(oldImageUrl);
+                }
             }
         }
 
-        return new PostUpdateResponse(post.getPostId());
+        return new PostUpdateResponse(
+                post.getPostId()
+        );
     }
 
     @Transactional
@@ -131,7 +182,19 @@ public class PostService {
         Post post = findPost(postId);
 
         if (!post.getUser().getUserId().equals(userId)) {
-            throw new UnauthorizedException(MessageCode.POST_DELETE_FORBIDDEN.getMessage());
+            throw new UnauthorizedException(
+                    MessageCode.POST_DELETE_FORBIDDEN.getMessage()
+            );
+        }
+
+        PostImage postImage = postImageRepository.findByPost(post).orElse(null);
+
+        if (postImage != null) {
+            String imageUrl = postImage.getImage();
+
+            if (imageUrl != null && !imageUrl.isBlank()) {
+                s3Service.deleteImage(imageUrl);
+            }
         }
 
         commentRepository.deleteByPost(post);

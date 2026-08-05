@@ -1,6 +1,7 @@
 package com.lucan.community.exception;
 
 import com.lucan.community.dto.response.ApiResponse;
+import com.lucan.community.message.MessageCode;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -35,17 +36,18 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse> handleValidationException(MethodArgumentNotValidException e) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ApiResponse("invalid_request", null));
+                .body(new ApiResponse(MessageCode.INVALID_REQUEST.getMessage(),null));
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiResponse> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse("invalid_request", null));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(MessageCode.INVALID_REQUEST.getMessage(), null));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse> handleException(Exception e) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse("internal_server_error", null));
+        e.printStackTrace();
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse(MessageCode.INTERNAL_SERVER_ERROR.getMessage(), null));
 
     }
 }

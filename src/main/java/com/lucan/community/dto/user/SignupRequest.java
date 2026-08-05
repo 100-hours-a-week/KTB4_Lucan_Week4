@@ -6,8 +6,11 @@ import lombok.NoArgsConstructor;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.Setter;
+import org.springframework.web.multipart.MultipartFile;
 
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class SignupRequest {
@@ -27,5 +30,5 @@ public class SignupRequest {
     @Size(max = 10, message = "닉네임은 최대 10자까지 작성 가능합니다.")
     private String nickname;
 
-    private String profileImage;
+    private MultipartFile profileImage;
 }

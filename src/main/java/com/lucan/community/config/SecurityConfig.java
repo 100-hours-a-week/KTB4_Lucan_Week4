@@ -107,7 +107,8 @@ public class SecurityConfig {
                 )
         );
         configuration.setAllowedHeaders(
-                List.of("Content-Type")
+                List.of("Content-Type",
+                        "X-View-Event-Id")
         );
         configuration.setAllowCredentials(true);
 

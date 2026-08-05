@@ -17,6 +17,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final S3Service s3Service;
 
     @Transactional
     public SignupResponse signup(SignupRequest request) {
@@ -30,11 +31,17 @@ public class UserService {
 
         String encodedPassword = passwordEncoder.encode(request.getPassword());
 
+        String profileImageUrl = null;
+
+        if (request.getProfileImage() != null && !request.getProfileImage().isEmpty()) {
+            profileImageUrl = s3Service.uploadImage(request.getProfileImage(),"profiles");
+        }
+
         User user = new User(
                 request.getEmail(),
                 encodedPassword,
                 request.getNickname(),
-                request.getProfileImage()
+                profileImageUrl
         );
 
         User savedUser = userRepository.save(user);
@@ -42,25 +49,65 @@ public class UserService {
         return new SignupResponse(savedUser.getUserId());
     }
 
+    @Transactional(readOnly = true)
+    public LoginResponse getMyInfo(Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(() ->
+                        new UnauthorizedException(MessageCode.LOGIN_REQUIRED.getMessage()));
+
+        return new LoginResponse(user.getUserId(), user.getEmail(), user.getNickname(), user.getProfileImage());
+    }
 
     @Transactional
     public void updateUser(Long userId, UserUpdateRequest request) {
-
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UnauthorizedException(MessageCode.LOGIN_REQUIRED.getMessage()));
 
-        if (user.getNickname().equals(request.getNickname())) {
-            throw new IllegalArgumentException(
-                    MessageCode.SAME_NICKNAME.getMessage());
+        String nickname = request.getNickname();
+
+        boolean hasNickname = nickname != null && !nickname.isBlank();
+
+        boolean hasProfileImage = request.getProfileImage() != null && !request.getProfileImage().isEmpty();
+
+        // 닉네임과 사진 모두 전송되지 않은 경우
+        if (!hasNickname && !hasProfileImage) {
+            throw new IllegalArgumentException(MessageCode.INVALID_REQUEST.getMessage());
         }
 
-        if (userRepository.existsByNickname(request.getNickname())) {
-            throw new ConflictException(
-                    MessageCode.NICKNAME_ALREADY_EXISTS.getMessage());
+        // 닉네임이 전송된 경우
+        if (hasNickname) {
+            String trimmedNickname = nickname.trim();
+
+            if (trimmedNickname.equals(user.getNickname())) {
+                // 같은 닉네임만 보내고 사진도 바꾸지 않은 경우
+                if (!hasProfileImage) {
+                    throw new IllegalArgumentException(MessageCode.SAME_NICKNAME.getMessage());
+                }
+
+                // 새 사진이 있다면 닉네임은 그대로 두고
+                // 아래 이미지 로직만 실행
+            } else {
+                if (userRepository.existsByNickname(trimmedNickname)) {
+                    throw new ConflictException(MessageCode.NICKNAME_ALREADY_EXISTS.getMessage());
+                }
+
+                user.setNickname(trimmedNickname);
+            }
         }
 
-        user.setNickname(request.getNickname());
-        user.setProfileImage(request.getProfileImage());
+        // 새 프로필 사진이 전송된 경우
+        if (hasProfileImage) {
+            String oldProfileImageUrl = user.getProfileImage();
+
+            String newProfileImageUrl =s3Service.uploadImage(request.getProfileImage(), "profiles");
+
+            // User 엔티티에는 URL 문자열 저장
+            user.setProfileImage(newProfileImageUrl);
+
+            // 기존 이미지가 있었다면 S3에서 삭제
+            if (oldProfileImageUrl != null && !oldProfileImageUrl.isBlank()) {
+                s3Service.deleteImage(oldProfileImageUrl);
+            }
+        }
     }
 
     @Transactional
@@ -87,6 +134,16 @@ public class UserService {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UnauthorizedException(MessageCode.LOGIN_REQUIRED.getMessage()));
+
+        String profileImageUrl = user.getProfileImage();
+
+        if (
+                profileImageUrl != null && !profileImageUrl.isBlank()
+        ) {
+            s3Service.deleteImage(profileImageUrl);
+
+            user.setProfileImage(null);
+        }
 
         user.delete();
     }
