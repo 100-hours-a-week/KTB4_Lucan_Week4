@@ -172,6 +172,8 @@ public class PostService {
             }
         }
 
+        post.updateModifiedAt();
+
         return new PostUpdateResponse(
                 post.getPostId()
         );

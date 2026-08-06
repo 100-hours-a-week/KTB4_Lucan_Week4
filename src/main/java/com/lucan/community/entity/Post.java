@@ -41,11 +41,17 @@ public class Post {
         this.viewCount++;
     }
 
+    public void updateModifiedAt() {
+        this.updatedAt = LocalDateTime.now();
+    }
+
     @PrePersist
     public void prePersist() {
         LocalDateTime now = LocalDateTime.now();
         this.createdAt = now;
         this.updatedAt = now;
     }
+
+
 
 }
