@@ -10,14 +10,14 @@ COPY settings.gradle .
 COPY src src
 
 RUN chmod +x gradlew
-RUN ./gradlew clean bootJar
+RUN ./gradlew clean bootJar -x test
 
 # ---------- Run Stage ----------
 FROM eclipse-temurin:21-jre
 
 WORKDIR /app
 
-COPY --from=builder /app/build/libs/*.jar app.jar
+COPY --from=builder /app/build/libs/*-SNAPSHOT.jar app.jar
 
 EXPOSE 8080
 
