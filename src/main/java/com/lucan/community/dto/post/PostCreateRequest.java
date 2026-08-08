@@ -1,6 +1,8 @@
 package com.lucan.community.dto.post;
 
+import com.lucan.community.enums.Team;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,6 +20,9 @@ public class PostCreateRequest {
 
     @NotBlank(message = "내용을 입력해주세요.")
     private String content;
+
+    @NotNull(message = "게시판을 선택해주세요.")
+    private Team team;
 
     private MultipartFile imageFile;
 }

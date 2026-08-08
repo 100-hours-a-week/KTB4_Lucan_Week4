@@ -1,5 +1,6 @@
 package com.lucan.community.entity;
 
+import com.lucan.community.enums.Team;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -18,6 +19,9 @@ public class User {
     private String password;
     @Column(unique = true)
     private String nickname;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Team favoriteTeam;
     private String profileImage;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -26,11 +30,12 @@ public class User {
     protected User() {
     }
 
-    public User(String email, String password, String nickname, String profileImage) {
+    public User(String email, String password, String nickname, String profileImage, Team favoriteTeam) {
         this.email = email;
         this.password = password;
         this.nickname = nickname;
         this.profileImage = profileImage;
+        this.favoriteTeam = favoriteTeam;
     }
 
     @PrePersist

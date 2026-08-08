@@ -65,19 +65,7 @@ public class CommentService {
                         )
                 );
 
-        List<Comment> comments =
-                commentRepository.findByPostOrderByCreatedAtDesc(post);
-
-        return comments.stream()
-                .map(comment -> new CommentListResponse(
-                        comment.getCommentId(),
-                        comment.getContent(),
-                        comment.getUser().getNickname(),
-                        comment.getUser().getProfileImage(),
-                        comment.getCreatedAt(),
-                        comment.getUpdatedAt()
-                ))
-                .toList();
+        return commentRepository.findCommentListByPost(post);
     }
 
     @Transactional

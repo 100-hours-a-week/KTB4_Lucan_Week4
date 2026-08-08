@@ -1,5 +1,6 @@
 package com.lucan.community.dto.post;
 
+import com.lucan.community.enums.Team;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -11,6 +12,9 @@ public class PostDetailResponse {
 
     private Long postId;
     private String title;
+
+    private Team team;
+    private Team favoriteTeam;
 
     private String nickname;
     private String profileImage;

@@ -6,6 +6,8 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
+import com.lucan.community.enums.Team;
+
 @Entity
 @Table(name = "posts",
         indexes = {
@@ -23,6 +25,10 @@ public class Post {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Team team;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
@@ -33,6 +39,14 @@ public class Post {
     public Post(String title, String content, User user) {
         this.title = title;
         this.content = content;
+        this.viewCount = 0;
+        this.user = user;
+    }
+
+    public Post(String title, String content, Team team, User user) {
+        this.title = title;
+        this.content = content;
+        this.team = team;
         this.viewCount = 0;
         this.user = user;
     }

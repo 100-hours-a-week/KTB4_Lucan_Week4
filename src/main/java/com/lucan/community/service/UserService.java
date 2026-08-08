@@ -41,7 +41,8 @@ public class UserService {
                 request.getEmail(),
                 encodedPassword,
                 request.getNickname(),
-                profileImageUrl
+                profileImageUrl,
+                request.getFavoriteTeam()
         );
 
         User savedUser = userRepository.save(user);

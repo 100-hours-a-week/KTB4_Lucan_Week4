@@ -3,6 +3,7 @@ package com.lucan.community.service;
 import com.lucan.community.dto.like.LikeResponse;
 import com.lucan.community.dto.post.*;
 import com.lucan.community.entity.*;
+import com.lucan.community.enums.Team;
 import com.lucan.community.exception.ConflictException;
 import com.lucan.community.exception.NotFoundException;
 import com.lucan.community.exception.UnauthorizedException;
@@ -30,11 +31,40 @@ public class PostService {
     private final S3Service s3Service;
 
     @Transactional(readOnly = true)
-    public List<PostListResponse> getPosts(int page, int size) {
+    public List<PostListResponse> getPosts(Team team, int page, int size) {
+
+        System.out.println("team = " + team);
 
         Pageable pageable = PageRequest.of(page, size);
 
-        return postRepository.findPostList(pageable).getContent();
+        if(team == null) {
+            return postRepository.findAllPostList(pageable).getContent();
+        }
+        return postRepository.findPostListByTeam(team,pageable).getContent();
+    }
+
+    @Transactional(readOnly = true)
+    public List<PostPreviewResponse> getRecentPosts(
+            Long userId
+    ) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() ->
+                        new NotFoundException(MessageCode.USER_NOT_FOUND.getMessage()));
+
+        Pageable pageable = PageRequest.of(0, 3);
+
+        return postRepository.findRecentPostsByTeam(user.getFavoriteTeam(), pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public List<PostPreviewResponse> getPopularPosts(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() ->
+                        new NotFoundException(MessageCode.USER_NOT_FOUND.getMessage()));
+
+        Pageable pageable = PageRequest.of(0, 3);
+
+        return postRepository.findPopularPostsByTeam(user.getFavoriteTeam(), pageable);
     }
 
     @Transactional
@@ -57,6 +87,8 @@ public class PostService {
         return new PostDetailResponse(
                 post.getPostId(),
                 post.getTitle(),
+                post.getTeam(),
+                post.getUser().getFavoriteTeam(),
                 post.getUser().getNickname(),
                 post.getUser().getProfileImage(),
                 image,
@@ -107,6 +139,7 @@ public class PostService {
         Post post = new Post(
                 request.getTitle(),
                 request.getContent(),
+                request.getTeam(),
                 user
         );
 

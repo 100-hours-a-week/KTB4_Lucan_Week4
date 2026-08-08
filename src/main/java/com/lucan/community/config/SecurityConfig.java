@@ -26,10 +26,12 @@ public class SecurityConfig {
                         cors.configurationSource(corsConfigurationSource())
                 )
                 .csrf(csrf -> csrf.disable())
+                .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/users/signup",
                                 "/users/login",
+                                "/h2-console/**",
                                 "/css/**",
                                 "/Js/**",
                                 "/images/**"

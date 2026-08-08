@@ -34,6 +34,7 @@ public enum MessageCode {
 
     LOGIN_REQUIRED("login_required"),
 
+    USER_NOT_FOUND("user_not_found"),
     POST_NOT_FOUND("post_not_found"),
     COMMENT_NOT_FOUND("comment_not_found"),
 

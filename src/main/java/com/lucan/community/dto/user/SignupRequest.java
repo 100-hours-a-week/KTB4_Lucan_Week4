@@ -1,10 +1,12 @@
 package com.lucan.community.dto.user;
 
+import com.lucan.community.enums.Team;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Setter;
 import org.springframework.web.multipart.MultipartFile;
@@ -29,6 +31,9 @@ public class SignupRequest {
     @NotBlank(message = "닉네임을 입력해주세요.")
     @Size(max = 10, message = "닉네임은 최대 10자까지 작성 가능합니다.")
     private String nickname;
+
+    @NotNull(message = "응원팀을 선택해주세요.")
+    private Team favoriteTeam;
 
     private MultipartFile profileImage;
 }

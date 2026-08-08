@@ -3,6 +3,7 @@ package com.lucan.community.controller;
 import com.lucan.community.dto.like.LikeResponse;
 import com.lucan.community.dto.post.*;
 import com.lucan.community.dto.response.ApiResponse;
+import com.lucan.community.enums.Team;
 import com.lucan.community.message.MessageCode;
 import com.lucan.community.security.CustomUserDetails;
 import com.lucan.community.service.PostService;
@@ -26,8 +27,29 @@ public class PostController {
 
     @ResponseStatus(HttpStatus.OK)
     @GetMapping
-    public ApiResponse getPosts(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
-        List<PostListResponse> response = postService.getPosts(page, size);
+    public ApiResponse getPosts(
+            @RequestParam(required = false) Team team,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        System.out.println("Controller team = " + team);
+
+        List<PostListResponse> response = postService.getPosts(team, page, size);
+        return new ApiResponse(MessageCode.GET_POSTS_SUCCESS.getMessage(), response);
+    }
+
+    @ResponseStatus(HttpStatus.OK)
+    @GetMapping("/recent")
+    public ApiResponse getRecentPosts(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        List<PostPreviewResponse> response = postService.getRecentPosts(userDetails.getUserId());
+        return new ApiResponse(MessageCode.GET_POST_SUCCESS.getMessage(),response);
+    }
+
+    @ResponseStatus(HttpStatus.OK)
+    @GetMapping("/popular")
+    public ApiResponse getPopularPosts(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        List<PostPreviewResponse> response = postService.getPopularPosts(userDetails.getUserId());
+
         return new ApiResponse(MessageCode.GET_POSTS_SUCCESS.getMessage(), response);
     }
 
