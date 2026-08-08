@@ -6,7 +6,13 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "comments")
+@Table(name = "comments",
+        indexes = {
+            @Index(
+                    name = "idx_comments_post_created_at",
+                    columnList = "post_id, created_at"
+            )
+        })
 @Getter @Setter
 public class Comment {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)

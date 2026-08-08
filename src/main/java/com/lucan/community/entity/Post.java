@@ -11,7 +11,10 @@ import com.lucan.community.enums.Team;
 @Entity
 @Table(name = "posts",
         indexes = {
-            @Index(name = "idx_posts_created_at", columnList = "created_at")
+            @Index(name = "idx_posts_created_at",
+                    columnList = "created_at"),
+            @Index(name = "idx_posts_team_created_at",
+            columnList = "team, created_at")
         })
 @Getter @Setter
 public class Post {
