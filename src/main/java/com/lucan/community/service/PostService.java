@@ -11,6 +11,7 @@ import com.lucan.community.message.MessageCode;
 import com.lucan.community.repository.*;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -31,16 +32,26 @@ public class PostService {
     private final S3Service s3Service;
 
     @Transactional(readOnly = true)
-    public List<PostListResponse> getPosts(Team team, int page, int size) {
-
-        System.out.println("team = " + team);
+    public PostPageResponse getPosts(Team team, int page, int size) {
 
         Pageable pageable = PageRequest.of(page, size);
 
+        Page<PostListResponse> postPage;
+
         if(team == null) {
-            return postRepository.findAllPostList(pageable).getContent();
+            postPage = postRepository.findAllPostList(pageable);
         }
-        return postRepository.findPostListByTeam(team,pageable).getContent();
+        else {
+            postPage = postRepository.findPostListByTeam(team,pageable);
+        }
+        return new PostPageResponse(
+                postPage.getContent(),
+                postPage.getNumber(),
+                postPage.getTotalPages(),
+                postPage.getTotalElements(),
+                postPage.isFirst(),
+                postPage.isLast()
+        );
     }
 
     @Transactional(readOnly = true)

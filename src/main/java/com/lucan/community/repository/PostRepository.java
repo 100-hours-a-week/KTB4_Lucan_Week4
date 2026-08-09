@@ -15,43 +15,45 @@ public interface PostRepository
         extends JpaRepository<Post, Long> {
 
     @Query("""
-    SELECT new com.lucan.community.dto.post.PostListResponse(
-        p.postId,
-        p.title,
-        p.team,
-        u.favoriteTeam,
-        COUNT(DISTINCT pl),
-        COUNT(DISTINCT c),
-        p.viewCount,
-        u.nickname,
-        u.profileImage,
-        p.createdAt,
-        p.updatedAt
-    )
-    FROM Post p
-    JOIN p.user u
-    LEFT JOIN PostLike pl ON pl.post = p
-    LEFT JOIN Comment c ON c.post = p
-    GROUP BY
-        p.postId,
-        p.title,
-        p.team,
-        u.favoriteTeam,
-        p.viewCount,
-        u.nickname,
-        u.profileImage,
-        p.createdAt,
-        p.updatedAt
-    ORDER BY p.createdAt DESC
-    """)
-    Page<PostListResponse> findAllPostList(Pageable pageable);
+        SELECT new com.lucan.community.dto.post.PostListResponse(
+            p.postId,
+            p.title,
+            p.team,
+            u.favoriteTeam,
+            COUNT(DISTINCT pl),
+            COUNT(DISTINCT c),
+            p.viewCount,
+            u.nickname,
+            u.profileImage,
+            p.createdAt,
+            p.updatedAt
+        )
+        FROM Post p
+        JOIN p.user u
+        LEFT JOIN PostLike pl ON pl.post = p
+        LEFT JOIN Comment c ON c.post = p
+        GROUP BY
+            p.postId,
+            p.title,
+            p.team,
+            u.favoriteTeam,
+            p.viewCount,
+            u.nickname,
+            u.profileImage,
+            p.createdAt,
+            p.updatedAt
+        ORDER BY p.createdAt DESC
+        """)
+    Page<PostListResponse> findAllPostList(
+            Pageable pageable
+    );
 
     @Query("""
         SELECT new com.lucan.community.dto.post.PostListResponse(
             p.postId,
             p.title,
             p.team,
-            u.favoriteTeam,        
+            u.favoriteTeam,
             COUNT(DISTINCT pl),
             COUNT(DISTINCT c),
             p.viewCount,
@@ -69,7 +71,7 @@ public interface PostRepository
             p.postId,
             p.title,
             p.team,
-            u.favoriteTeam,        
+            u.favoriteTeam,
             p.viewCount,
             u.nickname,
             u.profileImage,
@@ -77,50 +79,59 @@ public interface PostRepository
             p.updatedAt
         ORDER BY p.createdAt DESC
         """)
-    Page<PostListResponse> findPostListByTeam(Team team, Pageable pageable);
-
-@Query("""
-    SELECT new com.lucan.community.dto.post.PostPreviewResponse(
-        p.postId,
-        p.title,
-        COUNT(DISTINCT pl),
-        COUNT(DISTINCT c),
-        p.createdAt
-    )
-    FROM Post p
-    LEFT JOIN PostLike pl ON pl.post = p
-    LEFT JOIN Comment c ON c.post = p
-    WHERE p.team = :team
-    GROUP BY
-        p.postId,
-        p.title,
-        p.createdAt
-    ORDER BY p.createdAt DESC
-    """)
-List<PostPreviewResponse> findRecentPostsByTeam(Team team, Pageable pageable);
+    Page<PostListResponse> findPostListByTeam(
+            Team team,
+            Pageable pageable
+    );
 
     @Query("""
-    SELECT new com.lucan.community.dto.post.PostPreviewResponse(
-        p.postId,
-        p.title,
-        COUNT(DISTINCT pl),
-        COUNT(DISTINCT c),
-        p.createdAt
-    )
-    FROM Post p
-    LEFT JOIN PostLike pl ON pl.post = p
-    LEFT JOIN Comment c ON c.post = p
-    WHERE p.team = :team
-    GROUP BY
-        p.postId,
-        p.title,
-        p.viewCount,
-        p.createdAt
-    ORDER BY
-        COUNT(DISTINCT pl) DESC,
-        p.viewCount DESC,
-        p.createdAt DESC
-    """)
+        SELECT new com.lucan.community.dto.post.PostPreviewResponse(
+            p.postId,
+            p.title,
+            COUNT(DISTINCT pl),
+            COUNT(DISTINCT c),
+            p.viewCount,
+            p.createdAt
+        )
+        FROM Post p
+        LEFT JOIN PostLike pl ON pl.post = p
+        LEFT JOIN Comment c ON c.post = p
+        WHERE p.team = :team
+        GROUP BY
+            p.postId,
+            p.title,
+            p.viewCount,
+            p.createdAt
+        ORDER BY p.createdAt DESC
+        """)
+    List<PostPreviewResponse> findRecentPostsByTeam(
+            Team team,
+            Pageable pageable
+    );
+
+    @Query("""
+        SELECT new com.lucan.community.dto.post.PostPreviewResponse(
+            p.postId,
+            p.title,
+            COUNT(DISTINCT pl),
+            COUNT(DISTINCT c),
+            p.viewCount,
+            p.createdAt
+        )
+        FROM Post p
+        LEFT JOIN PostLike pl ON pl.post = p
+        LEFT JOIN Comment c ON c.post = p
+        WHERE p.team = :team
+        GROUP BY
+            p.postId,
+            p.title,
+            p.viewCount,
+            p.createdAt
+        ORDER BY
+            COUNT(DISTINCT pl) DESC,
+            p.viewCount DESC,
+            p.createdAt DESC
+        """)
     List<PostPreviewResponse> findPopularPostsByTeam(
             Team team,
             Pageable pageable

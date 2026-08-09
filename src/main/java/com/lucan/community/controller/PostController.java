@@ -32,9 +32,7 @@ public class PostController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
-        System.out.println("Controller team = " + team);
-
-        List<PostListResponse> response = postService.getPosts(team, page, size);
+        PostPageResponse response = postService.getPosts(team, page, size);
         return new ApiResponse(MessageCode.GET_POSTS_SUCCESS.getMessage(), response);
     }
 

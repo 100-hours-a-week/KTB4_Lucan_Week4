@@ -13,5 +13,6 @@ public class PostPreviewResponse {
     private String title;
     private Long likeCount;
     private Long commentCount;
+    private Integer viewCount;
     private LocalDateTime createdAt;
 }
